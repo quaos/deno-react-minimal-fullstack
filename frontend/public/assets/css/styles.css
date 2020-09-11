@@ -1,0 +1,23 @@
+.container {
+  flex: 1;
+  background-color: '#fff';
+  align-items: 'center';
+  justify-content: 'center';
+}
+
+.logo {
+  flex: 1;
+  align-items: "center";
+  justify-content: "center";
+  width: "192px";
+  height: "192px";
+}
+
+.note-item {
+  list-style-type: none;
+}
+
+.note-item container {
+  border-radius: 1em;
+}
+

@@ -1,0 +1,14 @@
+.vscode/**/*
+!.vscode/settings.json
+
+*.env
+**/*.env
+*.SECRET
+**/*.SECRET
+
+# macOS
+.DS_Store
+**/.DS_Store
+._*
+**/._*
+

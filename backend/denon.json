@@ -1,0 +1,26 @@
+{
+    "$schema": "https://deno.land/x/denon@2.3.2/schema.json",
+    "watch": false,
+    "watcher": {
+        "interval": 300,
+        "skip": [],
+        "legacy": false
+    },
+    "scripts": {
+        "start": [
+            {
+                "cmd": "deno run src/server.ts",
+                "desc": "run app server",
+                "allow": [
+                    "env",
+                    "net",
+                    "read",
+                    "run"
+                ],
+                "watch": true,
+                "unstable": true
+            }
+        ],
+        "cache": "deno cache src/deps/*.ts"
+    }
+  }

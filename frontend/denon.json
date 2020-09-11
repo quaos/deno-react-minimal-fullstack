@@ -1,0 +1,48 @@
+{
+    "$schema": "https://deno.land/x/denon@2.3.3/schema.json",
+    "watcher": {
+        "interval": 300,
+        "match": ["*.*", "src/**/*.*"],
+        "skip": ["public/*"],
+        "legacy": false
+    },
+    "scripts": {
+        "_build_denobundle": {
+            "cmd": "deno bundle src/client.tsx public/assets/js/client.bundle.js",
+            "desc": "bundle my client.tsx file"
+        },
+        "build": {
+            "cmd": "deno run --allow-env --allow-net --allow-read --allow-write --unstable https://deno.land/x/denopack@0.8.0/cli.ts -c denopack.config.ts",
+            "desc": "bundle my client.tsx file",
+            "watch": false
+        },
+        "start": [
+            {
+                "cmd": "deno run https://deno.land/x/denopack@0.8.0/cli.ts -c denopack.config.ts",
+                "desc": "bundle my client.tsx file",
+                "allow": [
+                    "env",
+                    "net",
+                    "read",
+                    "write",
+                    "run"
+                ],
+                "watch": false,
+                "unstable": true
+            },
+            {
+                "cmd": "deno run main.ts -- --browse serve",
+                "desc": "run web server",
+                "allow": [
+                    "env",
+                    "net",
+                    "read",
+                    "run"
+                ],
+                "watch": true,
+                "unstable": true
+            }
+        ],
+        "cache": "deno cache src/deps/*.ts"
+    }
+  }
