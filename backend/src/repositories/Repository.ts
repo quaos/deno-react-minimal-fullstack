@@ -1,8 +1,17 @@
-
 export interface Repository<T, TKey> {
-    public async list(filters?: any): Promise<T[]>;
-    public async getItem(key: TKey): Promise<T>;
-    public async addItem(item: T): Promise<T>;
-    public async updateItem(item: T): Promise<boolean>;
-    public async deleteItem(item: T): Promise<boolean>;
+    list(filters?: any): Promise<T[]>;
+    getItem(key: TKey): Promise<T | undefined>;
+    addItem(item: T): Promise<T>;
+    updateItem(item: T): Promise<boolean>;
+    deleteItem(item: T): Promise<boolean>;
+}
+
+export interface KeyManager<T, TKey> {
+    getKey: (item: T) => TKey;
+    nextKey: () => TKey;
+}
+
+export interface RepositoriesStore {
+    getRepository<T, TKey>(name: string, keyManager: KeyManager<T, TKey>)
+        : Repository<T, TKey>;
 }

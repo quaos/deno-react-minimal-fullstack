@@ -1,6 +1,7 @@
 import { React } from "../deps/react.ts";
 
-import { AppContext, AppContextProvider } from "../context/app.tsx";
+import { AppContextProvider } from "../context/app.tsx";
+import { NotesContextProvider } from "../context/notes.tsx";
 import { NotesList } from "./NotesList.tsx";
 
 const styles = {
@@ -21,11 +22,12 @@ const App = (props: any) => {
           <img src="assets/img/deno-logo.png" style={styles.logo} />
           <img src="assets/img/react-logo192.png" style={styles.logo} />
         </p>
-        <NotesList filters={{}} />
+        <NotesContextProvider>
+          <NotesList filters={{}} />
+        </NotesContextProvider>
       </div>
     </AppContextProvider>
   );
-  //
 };
 
 export default App;

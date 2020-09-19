@@ -1,21 +1,21 @@
 {
-    "$schema": "https://deno.land/x/denon@2.3.2/schema.json",
+    "$schema": "https://deno.land/x/denon@2.3.3/schema.json",
     "watch": false,
     "watcher": {
         "interval": 300,
+        "match": ["*.*", "src/**/*.*"],
         "skip": [],
         "legacy": false
     },
     "scripts": {
         "start": [
             {
-                "cmd": "deno run src/server.ts",
+                "cmd": "deno run main.ts",
                 "desc": "run app server",
                 "allow": [
                     "env",
                     "net",
-                    "read",
-                    "run"
+                    "read"
                 ],
                 "watch": true,
                 "unstable": true

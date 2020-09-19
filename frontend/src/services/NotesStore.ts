@@ -1,35 +1,33 @@
 import { Note } from "../../../common/src/models/Note.ts";
 
-import { StoresApiClient, StoresApiClientExtension } from "./StoresApiClient.ts";
+import { BaseApiClient } from "./BaseApiClient.ts";
 
-const ENDPOINT = "notes";
+export class NotesStore {
+    endpoint: string = "notes";
+    client: BaseApiClient;
 
-export class NotesStore implements StoresApiClientExtension<Note> {
-    client: StoresApiClient;
-
-    public constructor(client: StoresApiClient) {
+    public constructor(client: BaseApiClient) {
         this.client = client;
     }
 
     public async list(filters?: any): Promise<Note[]> {
-        return await this.client.callApi<Note[]>("GET", ENDPOINT);
+        return await this.client.callApi<Note[]>("GET", this.endpoint);
     }
 
     public async getItem(id: any): Promise<Note> {
-        return await this.client.callApi<Note>("GET", `${ENDPOINT}/${id}`);
+        return await this.client.callApi<Note>("GET", `${this.endpoint}/${id}`);
     }
 
     public async addItem(item: Note): Promise<Note> {
-        return await this.client.callApi<Note>("POST", ENDPOINT, item);
+        return await this.client.callApi<Note>("POST", this.endpoint, item);
     }
 
-    public async updateItem(item: Note): Promise<boolean>  {
-        const { success } = await this.client.callApi("PUT", `${ENDPOINT}/${item.id}`, item);
-        return success;
+    public async updateItem(item: Note): Promise<boolean> {
+        return await this.client.callApi("PUT", `${this.endpoint}/${item.id}`, item);
     };
 
     public async deleteItem(item: Note): Promise<boolean> {
-        const { success } = await this.client.callApi("DELETE", `${ENDPOINT}/${item.id}`);
+        const { success } = await this.client.callApi("DELETE", `${this.endpoint}/${item.id}`);
         return success;
     }
 }

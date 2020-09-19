@@ -6,13 +6,15 @@ import {
     RouterContext,
     RouterMiddleware,
 } from "./deps/oak.ts";
+import { oakCors } from "./deps/cors.ts";
 
 import { AppConfig } from "./app-config.ts";
 import { AppState } from "./AppState.ts";
+import { useNotesController } from "./controllers/notes.ts";
 import { accessLogger } from "./middlewares/access-logger.ts";
 import { errorHandler } from "./middlewares/error-handler.ts";
-import { createNotesController } from "./controllers/notes.ts";
 import { createStoreMiddleware } from "./middlewares/store-middleware.ts";
+import { MemoryStore } from "./repositories/MemoryStore.ts";
 
 export class Server {
     appConfig: AppConfig;
@@ -23,6 +25,7 @@ export class Server {
     
     public async start(): Promise<number> {
         console.info(`Starting server on port: ${this.appConfig.port}`);
+        console.log("App Config:", this.appConfig);
         let rc;
         try {
             const oakApp = await this.buildOakApp();    
@@ -42,20 +45,16 @@ export class Server {
     async buildOakApp<T extends OakApplication>(): Promise<T> {
         const app = new OakApplication<AppState>();
         
+        app.use(oakCors({ origin: this.appConfig.appFrontOrigin }));
         app.use(accessLogger<Middleware>({ format: "short" }));
         
-        const pingRouter = new Router();
-        pingRouter.get("/ping", async (ctx, next) => {
-            ctx.response.body = "Pong!";
-        });
-        app.use(pingRouter.routes(), pingRouter.allowedMethods());
+        const memoryStore = new MemoryStore();
 
         const apiRouter: Router = new Router();
-        apiRouter.use(createStoreMiddleware<RouterMiddleware>({ }));
+        apiRouter.use(createStoreMiddleware<RouterMiddleware>({ store: memoryStore }));
 
-        const notesController = createNotesController();
-        await apiRouter.all("/api/notes", notesController);
-        
+        useNotesController(apiRouter, "/api/notes");
+
         apiRouter.use(errorHandler<RouterMiddleware>({
             formatter: (err) => JSON.stringify({
                 errorMessage: err.message

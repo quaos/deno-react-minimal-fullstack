@@ -2260,10 +2260,6 @@ function dew$5() {
                             throw error;
                         }
                     }
-                    else {
-                        // No catch in prod codepath.
-                        return workLoop(hasTimeRemaining, initialTime);
-                    }
                 }
                 finally {
                     currentTask = null;
@@ -22589,9 +22585,6 @@ function dew$9() {
                                 var priorityLevel = inferPriorityFromExpirationTime(currentTime, expirationTime);
                                 hook.onCommitFiberRoot(rendererID, root, priorityLevel, didError);
                             }
-                            else {
-                                hook.onCommitFiberRoot(rendererID, root, undefined, didError);
-                            }
                         }
                         catch (err) {
                             if (true) {
@@ -23869,102 +23862,53 @@ function dew$a() {
 
 var ReactDOM = dew$a();
 
-const NotesContext = React.createContext({
-    list: (filters) => { throw new Error("Not Implemented"); },
-    addNote: (note) => { throw new Error("Not Implemented"); },
-    updateNote: (note) => { throw new Error("Not Implemented"); },
-    deleteNote: (note) => { throw new Error("Not Implemented"); },
-});
-const NotesContextProvider = ({ store, children }) => {
-    const list = async (filters) => {
-        return await store.list(filters);
-    };
-    const addNote = async (note) => {
-        const addedNote = await store.addItem(note);
-        return addedNote;
-    };
-    const updateNote = async (note) => {
-        const success = await store.updateItem(note);
-        return success;
-    };
-    const deleteNote = async (note) => {
-        const success = store.deleteItem(note);
-        return success;
-    };
-    return (React.createElement(NotesContext.Provider, { value: { list, addNote, updateNote, deleteNote } }, children));
-};
-
-const ENDPOINT = "notes";
-class NotesStore {
-    constructor(client) {
-        this.client = client;
-    }
-    async list(filters) {
-        return await this.client.callApi("GET", ENDPOINT, filters);
-    }
-    async getItem(id) {
-        return await this.client.callApi("GET", `${ENDPOINT}/${id}`);
-    }
-    async addItem(item) {
-        return await this.client.callApi("POST", ENDPOINT, item);
-    }
-    async updateItem(item) {
-        const { success } = await this.client.callApi("PUT", ENDPOINT, item);
-        return success;
-    }
-    ;
-    async deleteItem(item) {
-        const { success } = await this.client.callApi("DELETE", `${ENDPOINT}/${item.id}`);
-        return success;
-    }
+function merge(target, source) {
+    Object.assign(target, definedProps(source));
+}
+function definedProps(obj) {
+    return Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
 }
 
-class StoresApiClient {
+class BaseApiClient {
     constructor(attrs) {
-        this.apiBaseUrl = "http://localhost:8080/";
-        this.exts = {};
-        Object.assign(this, attrs);
+        this.apiBaseUrl = "http://localhost:8080/api";
+        (attrs) && merge(this, attrs);
     }
     async callApi(method = "GET", endpoint, reqData) {
-        let query;
-        let body;
-        if ((method === "POST") || (method === "PUT")) {
-            query = "";
-            body = JSON.stringify(reqData);
+        let queryString;
+        let headers = {};
+        let reqBody;
+        if (!reqData) {
+            queryString = "";
+            reqBody = undefined;
+        }
+        else if (method == "GET") {
+            queryString = `?${this.buildQueryString(reqData)}`;
+            reqBody = undefined;
         }
         else {
-            query = (reqData) ? `?${this.buildQueryParams(reqData)}` : undefined;
-            body = undefined;
+            queryString = "";
+            headers["Content-Type"] = "application/json";
+            reqBody = reqData;
         }
-        const resp = await fetch(`${this.apiBaseUrl}/${endpoint}`, {
+        const resp = await fetch(`${this.apiBaseUrl}/${endpoint}${queryString}`, {
             method,
-            body,
+            headers,
+            body: (reqBody) ? JSON.stringify(reqBody) : undefined,
         });
         return await resp.json();
     }
-    buildQueryParams(params) {
-        const pairs = [];
-        Object.entries(params).forEach((key, value) => {
-            pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
-        });
-        return pairs.join("&");
-    }
-    getExt(name) {
-        return this.exts[name];
-    }
-    registerExt(name, ext) {
-        this.exts[name] = ext;
+    buildQueryString(params) {
+        return Object.keys(params)
+            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+            .join("&");
     }
 }
 
-const AppContext = React.createContext({
-    loading: true,
-});
-const AppContextProvider = ({ config, children }) => {
+const AppContext = React.createContext(undefined);
+const AppContextProvider = ({ children }) => {
     let [loading, setLoading] = React.useState(true);
-    const apiClient = new StoresApiClient({});
-    const notesStore = new NotesStore(apiClient);
-    apiClient.registerExt("notes", notesStore);
+    const apiClient = new BaseApiClient({});
     console.log("Created API client:", apiClient);
     React.useEffect(() => {
         console.log("Start loading...");
@@ -23977,64 +23921,63 @@ const AppContextProvider = ({ config, children }) => {
             clearTimeout(timerId);
         };
     }, []);
-    return (React.createElement(AppContext.Provider, { value: { loading } },
-        React.createElement(NotesContextProvider, { filters: {}, store: notesStore }, children)));
+    return (React.createElement(AppContext.Provider, { value: { loading, apiClient } }, children));
 };
+function useAppContext() {
+    const context = React.useContext(AppContext);
+    if (context === undefined) {
+        throw new Error("No AppContext Provider available");
+    }
+    return context;
+}
 
-const NoteListItem = ({ data, key, onStartEdit, dispatchDelete }) => {
-    return (React.createElement("li", { key: key, className: "note-item" },
-        React.createElement("div", { class: "container" },
-            React.createElement("p", null,
-                React.createElement("strong", null, data.subject)),
-            React.createElement("p", null, data.content),
-            React.createElement("p", null,
-                React.createElement("a", { className: "btn btn-default", onClick: (evt) => onStartEdit(data, evt) }, "Edit"),
-                React.createElement("a", { className: "btn btn-danger", onClick: (evt) => dispatchDelete(data, evt) }, "Delete")))));
-};
-const CreateEditNoteItem = ({ data, onCancelEdit, dispatchReload }) => {
-    let { addNote, updateNote } = React.useContext(NotesContext);
-    let [subject, setSubject] = React.useState(data.subject || "");
-    let [content, setContent] = React.useState(data.content || "");
-    const onSubjectChanged = (evt) => {
-        setSubject(evt.currentTarget.value);
-        data.subject = subject;
-    };
-    const onContentChanged = (evt) => {
-        setContent(evt.currentTarget.value);
-        data.content = content;
-    };
-    const dispatchSave = async (evt) => {
-        const success = (data.id > 0)
-            ? await updateNote(data)
-            : !!(await addNote(data));
-        (success) && dispatchReload();
+class NotesStore {
+    constructor(client) {
+        this.endpoint = "notes";
+        this.client = client;
+    }
+    async list(filters) {
+        return await this.client.callApi("GET", this.endpoint);
+    }
+    async getItem(id) {
+        return await this.client.callApi("GET", `${this.endpoint}/${id}`);
+    }
+    async addItem(item) {
+        return await this.client.callApi("POST", this.endpoint, item);
+    }
+    async updateItem(item) {
+        return await this.client.callApi("PUT", `${this.endpoint}/${item.id}`, item);
+    }
+    ;
+    async deleteItem(item) {
+        const { success } = await this.client.callApi("DELETE", `${this.endpoint}/${item.id}`);
         return success;
-    };
-    return (React.createElement("li", { className: "note-item" },
-        React.createElement("div", { className: "container" },
-            React.createElement("p", null,
-                React.createElement("input", { type: "text", value: subject, placeholder: "Subject", onChange: onSubjectChanged })),
-            React.createElement("p", null,
-                React.createElement("textarea", { rows: "4", cols: "16", value: content, placeholder: "Content", onChange: onContentChanged })),
-            React.createElement("p", null,
-                React.createElement("a", { className: "btn btn-success", onClick: dispatchSave }, "Save"),
-                (onCancelEdit)
-                    ? React.createElement("a", { className: "btn btn-danger", onClick: onCancelEdit }, "Cancel")
-                    : React.createElement(React.Fragment, null)))));
+    }
+}
+
+const NotesContext = React.createContext(undefined);
+const NotesContextProvider = ({ children }) => {
+    const { apiClient } = useAppContext();
+    const store = new NotesStore(apiClient);
+    return (React.createElement(NotesContext.Provider, { value: { store } }, children));
 };
+function useNotesContext() {
+    const context = React.useContext(NotesContext);
+    if (context === undefined) {
+        throw new Error("No NotesContext Provider available");
+    }
+    return context;
+}
+
 const NotesList = ({ filters }) => {
-    let { list, deleteNote } = React.useContext(NotesContext);
-    let [loading, setLoading] = React.useState(true);
+    let { store } = useNotesContext();
+    let [loading, setLoading] = React.useState(false);
     let [notes, setNotes] = React.useState([]);
     let [error, setError] = React.useState(undefined);
-    let [editingNote, setEditingNote] = React.useState({});
+    let [editingNote, setEditingNote] = React.useState(undefined);
     let editingNoteRef = React.useRef();
     React.useEffect(() => {
-        (async function () {
-            const data = await list();
-            setNotes(data);
-            setLoading(false);
-        })();
+        dispatchReload({});
         return () => {
             //cleanup
         };
@@ -24045,32 +23988,146 @@ const NotesList = ({ filters }) => {
         setEditingNote(note);
     };
     const onCancelEdit = (evt) => {
-        setEditingNote({});
+        editingNoteRef.current = undefined;
+        setEditingNote(undefined);
     };
     const dispatchReload = (evt) => {
         if (loading) {
             return false;
         }
         setLoading(true);
-        list().then(setNotes);
-        setLoading(false);
+        (async function () {
+            try {
+                await doReload(evt);
+            }
+            catch (err) {
+                console.error(err);
+                setError(err);
+            }
+            setLoading(false);
+        })();
         return true;
     };
-    const dispatchDelete = async (note, evt) => {
-        const success = await deleteNote(note);
-        (success) && dispatchReload();
-        return success;
+    const dispatchSave = (note, evt) => {
+        if (loading) {
+            return false;
+        }
+        setLoading(true);
+        (async function () {
+            try {
+                const savedNote = (note.id > 0)
+                    ? await store.updateItem(note)
+                    : await store.addItem(note);
+                if (!savedNote) {
+                    throw new Error("failed saving note");
+                }
+                editingNoteRef.current = undefined;
+                setEditingNote(undefined);
+                await doReload(evt);
+            }
+            catch (err) {
+                console.error(err);
+                setError(err);
+            }
+            setLoading(false);
+        })();
+        return true;
+    };
+    const dispatchDelete = (note, evt) => {
+        if (loading) {
+            return false;
+        }
+        setLoading(true);
+        (async function () {
+            try {
+                const success = await store.deleteItem(note);
+                if (!success) {
+                    throw new Error("failed deleting note");
+                }
+                editingNoteRef.current = undefined;
+                setEditingNote(undefined);
+                await doReload(evt);
+            }
+            catch (err) {
+                console.error(err);
+                setError(err);
+            }
+            setLoading(false);
+        })();
+        return true;
+    };
+    const doReload = async (evt) => {
+        setNotes(await store.list());
+    };
+    if (loading) {
+        return (React.createElement(NotesListLayout, { dispatchReload: dispatchReload, dispatchSave: dispatchSave },
+            React.createElement("div", { className: "loading" }, "Loading...")));
+    }
+    if (error) {
+        return (React.createElement(NotesListLayout, { dispatchReload: dispatchReload, dispatchSave: dispatchSave },
+            React.createElement("div", { className: "error" }, error.message || `${error}`)));
+    }
+    return (React.createElement(NotesListLayout, { dispatchReload: dispatchReload, dispatchSave: dispatchSave },
+        React.createElement("ul", null,
+            notes.map((note, idx) => (note === editingNote) ? (React.createElement(CreateEditNoteItem, { data: note, elementKey: note.id, onCancelEdit: onCancelEdit, dispatchSave: dispatchSave })) : (React.createElement(NoteListItem, { data: note, elementKey: note.id, onStartEdit: onStartEdit, dispatchDelete: dispatchDelete }))),
+            (notes.length <= 0) ? (React.createElement("h2", null, "Write something!")) : null))
+    //<li key={note.id} className="note-item"><b>{note.subject}</b> {note.content}</li>
+    );
+};
+const NotesListLayout = ({ children, dispatchReload, dispatchSave }) => {
+    const newNote = {
+        id: 0,
+        subject: "",
+        content: "",
     };
     return (React.createElement("div", { className: "notes-list" },
         React.createElement("p", null,
-            React.createElement("a", { className: "btn btn-default", onClick: dispatchReload }, "Reload")),
-        (loading)
-            ? (React.createElement("div", { className: "loading" }, "Loading..."))
-            : (React.createElement("ul", null, notes.forEach((note, idx) => (note === editingNote)
-                ? React.createElement(NoteListItem, { data: note, key: idx, onStartEdit: onStartEdit, dispatchDelete: dispatchDelete })
-                : React.createElement(CreateEditNoteItem, { data: note, key: idx, onCancelEdit: onCancelEdit, dispatchReload: dispatchReload })))),
+            React.createElement("a", { className: "btn btn-info", onClick: dispatchReload }, "Reload")),
+        children,
+        React.createElement("hr", null),
         React.createElement("ul", null,
-            React.createElement(CreateEditNoteItem, { data: {}, dispatchReload: dispatchReload }))));
+            React.createElement(CreateEditNoteItem, { data: newNote, elementKey: "_NEW", dispatchSave: dispatchSave }))));
+};
+const NoteListItem = ({ data, elementKey, onStartEdit, dispatchDelete }) => {
+    return (React.createElement("li", { key: elementKey, className: "note-item" },
+        React.createElement("div", { className: "container" },
+            React.createElement("input", { type: "hidden", name: "note_id", value: data.id }),
+            React.createElement("p", null,
+                React.createElement("strong", null, data.subject)),
+            React.createElement("p", null, data.content),
+            React.createElement("p", null,
+                React.createElement("a", { className: "btn btn-info", onClick: (evt) => onStartEdit(data, evt) }, "Edit"),
+                React.createElement("a", { className: "btn btn-danger", onClick: (evt) => dispatchDelete(data, evt) }, "Delete")))));
+};
+const CreateEditNoteItem = ({ data, elementKey, onCancelEdit, dispatchSave }) => {
+    let { store } = useNotesContext();
+    let [subject, setSubject] = React.useState(data.subject || "");
+    let [content, setContent] = React.useState(data.content || "");
+    const onSubjectChanged = (evt) => {
+        setSubject(evt.currentTarget.value);
+    };
+    const onContentChanged = (evt) => {
+        setContent(evt.currentTarget.value);
+    };
+    const onSaveBtnClicked = (evt) => {
+        data = { ...data, subject, content };
+        if (dispatchSave(data, evt)) {
+            if (data.id <= 0) {
+                setSubject("");
+                setContent("");
+            }
+        }
+    };
+    return (React.createElement("li", { key: elementKey, className: "note-item" },
+        React.createElement("div", { className: "container" },
+            React.createElement("input", { type: "hidden", name: "note_id", value: data.id }),
+            React.createElement("p", null,
+                React.createElement("input", { type: "text", name: "note_subject", value: subject, placeholder: "Subject", onChange: onSubjectChanged })),
+            React.createElement("p", null,
+                React.createElement("textarea", { rows: "4", cols: "16", name: "note_content", value: content, placeholder: "Content", onChange: onContentChanged })),
+            React.createElement("p", null,
+                React.createElement("a", { className: "btn btn-success", onClick: onSaveBtnClicked }, "Save"),
+                (onCancelEdit) ? (React.createElement("a", { className: "btn btn-danger", onClick: onCancelEdit }, "Cancel")) : null))));
 };
 
 const styles = {
@@ -24088,8 +24145,8 @@ const App = (props) => {
             React.createElement("p", null,
                 React.createElement("img", { src: "assets/img/deno-logo.png", style: styles.logo }),
                 React.createElement("img", { src: "assets/img/react-logo192.png", style: styles.logo })),
-            React.createElement(NotesList, { filters: {} }))));
-    //
+            React.createElement(NotesContextProvider, null,
+                React.createElement(NotesList, { filters: {} })))));
 };
 
 window.addEventListener("DOMContentLoaded", (evt) => {

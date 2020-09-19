@@ -1,43 +1,52 @@
 import { React } from "../deps/react.ts";
 
-import { NotesContextProvider } from "./notes.tsx";
-import { NotesStore } from "../services/NotesStore.ts";
-import { StoresApiClient } from "../services/StoresApiClient.ts";
+import { BaseApiClient } from "../services/BaseApiClient.ts";
 
 export interface AppContextProps {
-    loading: boolean;
-    apiClient?: StoresApiClient;
+  loading: boolean;
+  apiClient: BaseApiClient;
 }
 
-export const AppContext = React.createContext<AppContextProps>({
-    loading: true,
-});
+export const AppContext = React.createContext<AppContextProps | undefined>(
+  undefined,
+);
 
-export const AppContextProvider: React.FC = ({ config, children }) => {
-    let [ loading, setLoading ] = React.useState(true);
+export interface AppContextProviderProps {
+  children: React.ReactNode;
+}
 
-    React.useEffect(() => {
-      console.log("Start loading...");
-  
-      const apiClient = new StoresApiClient({ });
-      console.log("Created API client:",apiClient);
-    
-      const timerId = setTimeout(() => {
-        setLoading(false);
-        console.log("Finished loading");
-      }, 1000);
-  
-      return () => {
-        //cleanup
-        clearTimeout(timerId);
-      }
-    }, []);
+export const AppContextProvider: React.FC = ({ children }: AppContextProviderProps) => {
+  let [loading, setLoading] = React.useState(true);
 
-    return (
-      <AppContext.Provider value={{ loading, apiClient }}>
-        <NotesContextProvider filters={{}} store={notesStore}>
-            {children}
-        </NotesContextProvider>
-      </AppContext.Provider>
-    );
+  const apiClient = new BaseApiClient({});
+  console.log("Created API client:", apiClient);
+
+  React.useEffect(() => {
+    console.log("Start loading...");
+
+    const timerId = setTimeout(() => {
+      setLoading(false);
+      console.log("Finished loading");
+    }, 1000);
+
+    return () => {
+      //cleanup
+      clearTimeout(timerId);
+    };
+  }, []);
+
+  return (
+    <AppContext.Provider value={{ loading, apiClient }}>
+      {children}
+    </AppContext.Provider>
+  );
 };
+
+export function useAppContext(): AppContextProps {
+  const context = React.useContext(AppContext);
+  if (context === undefined) {
+    throw new Error("No AppContext Provider available");
+  }
+
+  return context;
+}

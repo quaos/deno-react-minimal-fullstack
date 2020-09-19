@@ -3,7 +3,7 @@ import { Middleware, RouterMiddleware } from "../deps/oak.ts";
 import { MemoryStore } from "../repositories/MemoryStore.ts";
 
 export interface StoreMiddlewareOptions {
-    
+    store: MemoryStore;
 };
 
 export function createStoreMiddleware<
@@ -14,7 +14,7 @@ export function createStoreMiddleware<
             return await next();
         }
         
-        ctx.state.store = new MemoryStore();
+        ctx.state.store = opts.store;
 
         await next();
     };
