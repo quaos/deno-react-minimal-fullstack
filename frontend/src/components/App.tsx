@@ -1,8 +1,6 @@
 import { React } from "../deps/react.ts";
 
-import { NotesStore } from "../services/NotesStore.ts";
-import { StoresApiClient } from "../services/StoresApiClient.ts";
-import { AppContext, AppContextProvider } from "../context/app.ts";
+import { AppContext, AppContextProvider } from "../context/app.tsx";
 import { NotesList } from "./NotesList.tsx";
 
 const styles = {
@@ -27,6 +25,7 @@ const App = (props: any) => {
       </div>
     </AppContextProvider>
   );
+  //
 };
 
 export default App;

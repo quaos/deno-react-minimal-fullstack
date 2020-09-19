@@ -19,31 +19,13 @@ export class StoresApiClient {
         Object.assign(this, attrs);
     }
 
-    async callApi<T>(method: string = "GET", endpoint: string, reqData?: any): T {
-        let query: string;
-        let body?: string;
-        if ((method === "POST") || (method === "PUT")) {
-            query = "";
-            body = JSON.stringify(reqData);
-        } else {
-            query = (reqData) ? `?${this.buildQueryParams(reqData)}` : undefined;
-            body = undefined;
-        }
-
+    async callApi<T>(method: string = "GET", endpoint: string, reqData?: any): Promise<T> {
         const resp = await fetch(`${this.apiBaseUrl}/${endpoint}`, {
             method,
-            body,
+            body: reqData,
         });
 
         return await resp.json() as T;
-    }
-
-    buildQueryParams(params): string {
-        const pairs = [];
-        Object.entries(params).forEach((key, value) => {
-            pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
-        });
-        return pairs.join("&");
     }
 
     getExt<T>(name: string) {

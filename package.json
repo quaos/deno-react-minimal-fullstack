@@ -11,7 +11,6 @@
     "github": "https://github.com/quaos/deno-react-minimal-fullstack"
   },
   "scripts": {
-    "build-backend": "cd backend && deno run --allow-env --allow-net --allow-read --allow-write --unstable https://deno.land/x/denopack@0.8.0/cli.ts -c denopack.config.ts",
     "build-frontend": "cd frontend && deno run --allow-env --allow-net --allow-read --allow-write --unstable https://deno.land/x/denopack@0.8.0/cli.ts -c denopack.config.ts",
     "backend": "cd backend && deno run --allow-env --allow-net --allow-read --allow-run src/server.ts",
     "frontend": "cd frontend && deno run --allow-env --allow-net --allow-read --allow-run main.ts -- --browse serve",

@@ -12,7 +12,7 @@ export class NotesStore implements StoresApiClientExtension<Note> {
     }
 
     public async list(filters?: any): Promise<Note[]> {
-        return await this.client.callApi<Note[]>("GET", ENDPOINT, filters);
+        return await this.client.callApi<Note[]>("GET", ENDPOINT);
     }
 
     public async getItem(id: any): Promise<Note> {
@@ -24,7 +24,7 @@ export class NotesStore implements StoresApiClientExtension<Note> {
     }
 
     public async updateItem(item: Note): Promise<boolean>  {
-        const { success } = await this.client.callApi("PUT", ENDPOINT, item);
+        const { success } = await this.client.callApi("PUT", `${ENDPOINT}/${item.id}`, item);
         return success;
     };
 

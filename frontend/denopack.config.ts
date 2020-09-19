@@ -2,7 +2,7 @@ import {
   useCache,
 } from "https://deno.land/x/denopack@0.8.0/plugin/mod.ts";
 
-export default {
+const config = {
     input: "src/client.tsx",
     output: {
         // TODO: Find the way to properly output files to public/assets/js/
@@ -16,7 +16,11 @@ export default {
             compilerOptions: {
                 lib: ["dom"],
                 jsx: "react",
+                rootDir: "src",
             },
         }),
     ],
 };
+console.log("Generated denopack config:", config);
+
+export default config;

@@ -23869,17 +23869,103 @@ function dew$a() {
 
 var ReactDOM = dew$a();
 
-const styles = {
-    logo: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        width: "192px",
-        height: "192px",
-    },
+const NotesContext = React.createContext({
+    list: (filters) => { throw new Error("Not Implemented"); },
+    addNote: (note) => { throw new Error("Not Implemented"); },
+    updateNote: (note) => { throw new Error("Not Implemented"); },
+    deleteNote: (note) => { throw new Error("Not Implemented"); },
+});
+const NotesContextProvider = ({ store, children }) => {
+    const list = async (filters) => {
+        return await store.list(filters);
+    };
+    const addNote = async (note) => {
+        const addedNote = await store.addItem(note);
+        return addedNote;
+    };
+    const updateNote = async (note) => {
+        const success = await store.updateItem(note);
+        return success;
+    };
+    const deleteNote = async (note) => {
+        const success = store.deleteItem(note);
+        return success;
+    };
+    return (React.createElement(NotesContext.Provider, { value: { list, addNote, updateNote, deleteNote } }, children));
 };
-const App = (props) => {
+
+const ENDPOINT = "notes";
+class NotesStore {
+    constructor(client) {
+        this.client = client;
+    }
+    async list(filters) {
+        return await this.client.callApi("GET", ENDPOINT, filters);
+    }
+    async getItem(id) {
+        return await this.client.callApi("GET", `${ENDPOINT}/${id}`);
+    }
+    async addItem(item) {
+        return await this.client.callApi("POST", ENDPOINT, item);
+    }
+    async updateItem(item) {
+        const { success } = await this.client.callApi("PUT", ENDPOINT, item);
+        return success;
+    }
+    ;
+    async deleteItem(item) {
+        const { success } = await this.client.callApi("DELETE", `${ENDPOINT}/${item.id}`);
+        return success;
+    }
+}
+
+class StoresApiClient {
+    constructor(attrs) {
+        this.apiBaseUrl = "http://localhost:8080/";
+        this.exts = {};
+        Object.assign(this, attrs);
+    }
+    async callApi(method = "GET", endpoint, reqData) {
+        let query;
+        let body;
+        if ((method === "POST") || (method === "PUT")) {
+            query = "";
+            body = JSON.stringify(reqData);
+        }
+        else {
+            query = (reqData) ? `?${this.buildQueryParams(reqData)}` : undefined;
+            body = undefined;
+        }
+        const resp = await fetch(`${this.apiBaseUrl}/${endpoint}`, {
+            method,
+            body,
+        });
+        return await resp.json();
+    }
+    buildQueryParams(params) {
+        const pairs = [];
+        Object.entries(params).forEach((key, value) => {
+            pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+        });
+        return pairs.join("&");
+    }
+    getExt(name) {
+        return this.exts[name];
+    }
+    registerExt(name, ext) {
+        this.exts[name] = ext;
+    }
+}
+
+const AppContext = React.createContext({
+    loading: true,
+});
+const AppContextProvider = ({ config, children }) => {
     let [loading, setLoading] = React.useState(true);
+    const apiClient = new StoresApiClient({});
+    const notesStore = new NotesStore(apiClient);
+    apiClient.registerExt("notes", notesStore);
+    console.log("Created API client:", apiClient);
     React.useEffect(() => {
         console.log("Start loading...");
         const timerId = setTimeout(() => {
@@ -23891,14 +23977,119 @@ const App = (props) => {
             clearTimeout(timerId);
         };
     }, []);
-    return (React.createElement("div", { className: "container" },
+    return (React.createElement(AppContext.Provider, { value: { loading } },
+        React.createElement(NotesContextProvider, { filters: {}, store: notesStore }, children)));
+};
+
+const NoteListItem = ({ data, key, onStartEdit, dispatchDelete }) => {
+    return (React.createElement("li", { key: key, className: "note-item" },
+        React.createElement("div", { class: "container" },
+            React.createElement("p", null,
+                React.createElement("strong", null, data.subject)),
+            React.createElement("p", null, data.content),
+            React.createElement("p", null,
+                React.createElement("a", { className: "btn btn-default", onClick: (evt) => onStartEdit(data, evt) }, "Edit"),
+                React.createElement("a", { className: "btn btn-danger", onClick: (evt) => dispatchDelete(data, evt) }, "Delete")))));
+};
+const CreateEditNoteItem = ({ data, onCancelEdit, dispatchReload }) => {
+    let { addNote, updateNote } = React.useContext(NotesContext);
+    let [subject, setSubject] = React.useState(data.subject || "");
+    let [content, setContent] = React.useState(data.content || "");
+    const onSubjectChanged = (evt) => {
+        setSubject(evt.currentTarget.value);
+        data.subject = subject;
+    };
+    const onContentChanged = (evt) => {
+        setContent(evt.currentTarget.value);
+        data.content = content;
+    };
+    const dispatchSave = async (evt) => {
+        const success = (data.id > 0)
+            ? await updateNote(data)
+            : !!(await addNote(data));
+        (success) && dispatchReload();
+        return success;
+    };
+    return (React.createElement("li", { className: "note-item" },
+        React.createElement("div", { className: "container" },
+            React.createElement("p", null,
+                React.createElement("input", { type: "text", value: subject, placeholder: "Subject", onChange: onSubjectChanged })),
+            React.createElement("p", null,
+                React.createElement("textarea", { rows: "4", cols: "16", value: content, placeholder: "Content", onChange: onContentChanged })),
+            React.createElement("p", null,
+                React.createElement("a", { className: "btn btn-success", onClick: dispatchSave }, "Save"),
+                (onCancelEdit)
+                    ? React.createElement("a", { className: "btn btn-danger", onClick: onCancelEdit }, "Cancel")
+                    : React.createElement(React.Fragment, null)))));
+};
+const NotesList = ({ filters }) => {
+    let { list, deleteNote } = React.useContext(NotesContext);
+    let [loading, setLoading] = React.useState(true);
+    let [notes, setNotes] = React.useState([]);
+    let [error, setError] = React.useState(undefined);
+    let [editingNote, setEditingNote] = React.useState({});
+    let editingNoteRef = React.useRef();
+    React.useEffect(() => {
+        (async function () {
+            const data = await list();
+            setNotes(data);
+            setLoading(false);
+        })();
+        return () => {
+            //cleanup
+        };
+    }, []);
+    const onStartEdit = (note, evt) => {
+        editingNoteRef.current = evt.currentTarget;
+        editingNoteRef.current.focus();
+        setEditingNote(note);
+    };
+    const onCancelEdit = (evt) => {
+        setEditingNote({});
+    };
+    const dispatchReload = (evt) => {
+        if (loading) {
+            return false;
+        }
+        setLoading(true);
+        list().then(setNotes);
+        setLoading(false);
+        return true;
+    };
+    const dispatchDelete = async (note, evt) => {
+        const success = await deleteNote(note);
+        (success) && dispatchReload();
+        return success;
+    };
+    return (React.createElement("div", { className: "notes-list" },
         React.createElement("p", null,
-            React.createElement("img", { src: "assets/img/deno-logo.png", style: styles.logo }),
-            React.createElement("img", { src: "assets/img/react-logo192.png", style: styles.logo })),
-        React.createElement("pre", null,
-            "Loading ...",
-            (loading) ? "" : " OK!"),
-        React.createElement("p", null, "Open up App.tsx to start working on your app!")));
+            React.createElement("a", { className: "btn btn-default", onClick: dispatchReload }, "Reload")),
+        (loading)
+            ? (React.createElement("div", { className: "loading" }, "Loading..."))
+            : (React.createElement("ul", null, notes.forEach((note, idx) => (note === editingNote)
+                ? React.createElement(NoteListItem, { data: note, key: idx, onStartEdit: onStartEdit, dispatchDelete: dispatchDelete })
+                : React.createElement(CreateEditNoteItem, { data: note, key: idx, onCancelEdit: onCancelEdit, dispatchReload: dispatchReload })))),
+        React.createElement("ul", null,
+            React.createElement(CreateEditNoteItem, { data: {}, dispatchReload: dispatchReload }))));
+};
+
+const styles = {
+    logo: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        width: "192px",
+        height: "192px",
+    },
+};
+const App = (props) => {
+    return (React.createElement(AppContextProvider, null,
+        React.createElement("div", { className: "container" },
+            React.createElement("p", null,
+                React.createElement("img", { src: "assets/img/deno-logo.png", style: styles.logo }),
+                React.createElement("img", { src: "assets/img/react-logo192.png", style: styles.logo })),
+            React.createElement(NotesList, { filters: {} }))));
+    //
 };
 
 window.addEventListener("DOMContentLoaded", (evt) => {

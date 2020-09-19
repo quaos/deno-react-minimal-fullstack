@@ -1,7 +1,7 @@
 import { React } from "../deps/react.ts";
 
 import { Note } from "../../../common/src/models/Note.ts";
-import { NotesContext } from "../context/notes.tsx";
+import { useNotesContext } from "../context/notes.tsx";
 
 export const NoteListItem: React.FC = ({ data, key, onStartEdit, dispatchDelete }) => {
     return (
@@ -18,8 +18,8 @@ export const NoteListItem: React.FC = ({ data, key, onStartEdit, dispatchDelete 
     );
 };
 
-export const CreateEditNoteItem: React.FC = ({ data, onCancelEdit, dispatchReload }) => {
-    let { addNote, updateNote } = React.useContext(NotesContext);
+export const CreateEditNoteItem: React.FC = ({ data, key, onCancelEdit, dispatchSave }) => {
+    let { store } = useNotesContext();
 
     let [subject, setSubject] = React.useState(data.subject || "");
     let [content, setContent] = React.useState(data.content || "");
@@ -34,48 +34,59 @@ export const CreateEditNoteItem: React.FC = ({ data, onCancelEdit, dispatchReloa
         data.content = content;
     }
 
-    const dispatchSave = async (evt) => {
-        const success = (data.id > 0)
-            ? await updateNote(data)
-            : !!(await addNote(data));
-        (success) && dispatchReload();
-        return success;
-    };
-
     return (
-        <li className="note-item">
+        <li key={key} className="note-item">
             <div className="container">
-                <p><input
+                <p><input type="text"
                     value={subject}
                     placeholder="Subject"
                     onChange={onSubjectChanged}/></p>
                 <p><textarea rows="4" cols="16"
+                    value={content}
                     placeholder="Content"
-                    onChange={onContentChanged}>{content}</textarea></p>
+                    onChange={onContentChanged}></textarea></p>
                 <p>
                     <a className="btn btn-success" onClick={dispatchSave}>Save</a>
-                    { (onCancelEdit)
-                        ? <a className="btn btn-danger" onClick={onCancelEdit}>Cancel</a>
-                        : ()
-                    }
+                    { (onCancelEdit) ? (
+                        <a className="btn btn-danger" onClick={onCancelEdit}>Cancel</a>
+                    ) : null }
                 </p>
             </div>
         </li>
     );
 };
 
+const NotesListLayout: React.FC = ({ children, dispatchReload, dispatchSave }) => {
+    return (
+        <div className="notes-list">
+            <p><a className="btn btn-default" onClick={dispatchReload}>Reload</a></p>
+            {children}
+            <hr />
+            <ul>
+                <CreateEditNoteItem data={{}} dispatchSave={dispatchSave} />
+            </ul>
+        </div>
+    );
+}
+
 export const NotesList: React.FC = ({ filters }) => {
-    let { list, deleteNote } = React.useContext(NotesContext);
+    let { store } = useNotesContext();
 
     let [loading, setLoading] = React.useState(true);
     let [notes, setNotes] = React.useState([]);
     let [error, setError] = React.useState(undefined);
-    let [editingNote, setEditingNote] = React.useState<Partial<Note>>({});
+    let [editingNote, setEditingNote] = React.useState<Note | undefined>(undefined);
     let editingNoteRef = React.useRef();
 
     React.useEffect(() => {
         (async function () {
-            setNotes(await list());
+            try {
+                const data = await list();
+                setNotes(data);
+            } catch (err) {
+                console.error(err);
+                setError(err);
+            }
             setLoading(false);
         })();
 
@@ -91,7 +102,8 @@ export const NotesList: React.FC = ({ filters }) => {
     };
 
     const onCancelEdit = (evt: any) => {
-        setEditingNote({});
+        editingNoteRef.current = undefined;
+        setEditingNote(undefined);
     };
 
     const dispatchReload = (evt: any) => {
@@ -99,41 +111,63 @@ export const NotesList: React.FC = ({ filters }) => {
             return false;
         }
         setLoading(true);
-        list().then(setNotes);
+        store.list().then(setNotes);
         setLoading(false);
         return true;
     };
 
+    const dispatchSave = async (evt) => {
+        const success = (data.id > 0)
+            ? await store.updateItem(data)
+            : !!(await store.addItem(data));
+        if (success) {
+            editingNoteRef.current = undefined;
+            setEditingNote(undefined);
+            dispatchReload();
+        }
+        return success;
+    };
+
     const dispatchDelete = async (note, evt) => {
-        const success = await deleteNote(note);
+        const success = await store.deleteNote(note);
         (success) && dispatchReload(evt);
         return success;
     };
 
+    if (loading) {
+        return (
+            <NotesListLayout dispatchReload={dispatchReload} dispatchSave={dispatchSave}>
+                <div className="loading">Loading...</div>
+            </NotesListLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <NotesListLayout dispatchReload={dispatchReload} dispatchSave={dispatchSave}>
+                <div className="error">{error.message || `${error}`}</div>
+            </NotesListLayout>
+        );
+    }
+
     return (
-        <div className="notes-list">
-            <p><a className="btn btn-default" onClick={dispatchReload}>Reload</a></p>
-            {(loading)
-                ? (
-                    <div className="loading">Loading...</div>
-                )
-                : (
-                    <ul>
-                    {notes.forEach((note, idx) => (
-                        {(note === editingNote)
-                            ? <NoteListItem data={note}
-                                key={idx}
-                                onStartEdit={onStartEdit}
-                                dispatchDelete={dispatchDelete} />
-                            : <CreateEditNoteItem data={note}
-                                onCancelEdit={onCancelEdit}
-                                dispatchReload={dispatchReload} />}
-                    ))}
-                    </ul>
-                )}
+        <NotesListLayout dispatchReload={dispatchReload} dispatchSave={dispatchSave>
             <ul>
-                <CreateEditNote data={{}} dispatchReload={dispatchReload} />
+            {notes.forEach((note, idx) =>
+                (note === editingNote)
+                    ? <NoteListItem data={note}
+                        key={idx}
+                        onStartEdit={onStartEdit}
+                        dispatchDelete={dispatchDelete} />
+                    : <CreateEditNoteItem data={note}
+                        key={idx}
+                        onCancelEdit={onCancelEdit}
+                        dispatchSave={dispatchSave} />
+            )}
+            {(notes.length <= 0) ? (
+                <h2>Write something!</h2>
+            ) : null}
             </ul>
-        </div>
+        </NotesListLayout>
     );
 };
