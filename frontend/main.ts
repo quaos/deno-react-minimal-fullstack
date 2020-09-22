@@ -8,6 +8,21 @@ async function browse(url: string) {
 }
 
 const commands: Map<string, (opts?: any) => Promise<number>> = new Map([
+  ["build", (opts?: any) => {
+    let cmd = ["denopack", "-c", "denopack.config.ts"];
+    // Workaround for Windows
+    // @ts-ignore TS2367
+    if (Deno.build.os === "win") {
+      cmd = ["cmd", "/c"].concat(cmd);
+    }
+
+    const process: Deno.Process = Deno.run({
+      cmd,
+      env: Deno.env.toObject(),
+    });
+
+    return process.status().then(status => status.code)
+  }],
   ["serve", (opts?: any) => {
     const host = opts?.host || "localhost";
     const port = opts?.port || 3000;
@@ -34,7 +49,7 @@ for (let arg of Deno.args) {
 
 if (!command) {
   console.error(
-    "usage: deno --allow-read --allow-net --unstable main.ts -- [--browse] (serve)",
+    "usage: deno --allow-read --allow-net --unstable main.ts -- [--browse] (build|serve)",
   );
   rc = -1;
   Deno.exit(rc);

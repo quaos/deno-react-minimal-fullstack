@@ -8,15 +8,27 @@
     },
     "scripts": {
         "build": {
-            "cmd": "denopack -c denopack.config.ts",
+            "cmd": "deno run main.ts -- build",
             "desc": "bundle my client.tsx file",
-            "watch": false
+            "watch": false,
+            "allow": [
+                "env",
+                "net",
+                "read",
+                "run"
+            ]
         },
         "start": [
             {
-                "cmd": "denon build",
+                "cmd": "deno run main.ts -- build",
                 "desc": "bundle my client.tsx file",
-                "watch": false
+                "watch": false,
+                "allow": [
+                    "env",
+                    "net",
+                    "read",
+                    "run"
+                ]
             },
             {
                 "cmd": "deno run main.ts -- --browse serve",
