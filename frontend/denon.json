@@ -10,25 +10,27 @@
         "build": {
             "cmd": "deno run main.ts -- build",
             "desc": "bundle my client.tsx file",
-            "watch": false,
             "allow": [
                 "env",
                 "net",
                 "read",
                 "run"
-            ]
+            ],
+            "watch": false,
+            "unstable": true
         },
         "start": [
             {
                 "cmd": "deno run main.ts -- build",
                 "desc": "bundle my client.tsx file",
-                "watch": false,
                 "allow": [
                     "env",
                     "net",
                     "read",
                     "run"
-                ]
+                ],
+                "watch": false,
+                "unstable": true
             },
             {
                 "cmd": "deno run main.ts -- --browse serve",

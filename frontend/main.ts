@@ -12,14 +12,15 @@ const commands: Map<string, (opts?: any) => Promise<number>> = new Map([
     let cmd = ["denopack", "-c", "denopack.config.ts"];
     // Workaround for Windows
     // @ts-ignore TS2367
-    if (Deno.build.os === "win") {
+    if (/^(win|windows)$/.test(Deno.build.os)) {
       cmd = ["cmd", "/c"].concat(cmd);
     }
-
-    const process: Deno.Process = Deno.run({
+    const runOpts = {
       cmd,
       env: Deno.env.toObject(),
-    });
+    };
+    console.log("Deno.run():", runOpts);
+    const process: Deno.Process = Deno.run(runOpts);
 
     return process.status().then(status => status.code)
   }],

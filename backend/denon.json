@@ -21,6 +21,19 @@
                 "unstable": true
             }
         ],
+        "debug": [
+            {
+                "cmd": "deno run --inspect-brk main.ts",
+                "desc": "run app server",
+                "allow": [
+                    "env",
+                    "net",
+                    "read"
+                ],
+                "watch": true,
+                "unstable": true
+            }
+        ],
         "cache": "deno cache src/deps/*.ts"
     }
   }

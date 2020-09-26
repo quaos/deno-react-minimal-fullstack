@@ -4,10 +4,11 @@ import { Note } from "../../../common/src/models/Note.ts";
 import { useNotesContext } from "../context/notes.tsx";
 
 interface NotesListProps {
+    Component?: string;
     filters?: any;
 }
 
-export const NotesList: React.FC = ({ filters }: NotesListProps) => {
+export const NotesList: React.FC = ({ Component, filters }: NotesListProps) => {
     let { store } = useNotesContext();
 
     let [loading, setLoading] = React.useState(false);
@@ -17,7 +18,7 @@ export const NotesList: React.FC = ({ filters }: NotesListProps) => {
     let editingNoteRef = React.useRef<Note | undefined>();
 
     React.useEffect(() => {
-        dispatchReload({ });
+        dispatchReload({});
 
         return () => {
             //cleanup
@@ -49,7 +50,7 @@ export const NotesList: React.FC = ({ filters }: NotesListProps) => {
             }
             setLoading(false);
         })();
-        
+
         return true;
     };
 
@@ -107,7 +108,7 @@ export const NotesList: React.FC = ({ filters }: NotesListProps) => {
 
     if (loading) {
         return (
-            <NotesListLayout dispatchReload={dispatchReload} dispatchSave={dispatchSave}>
+            <NotesListLayout Component={Component} dispatchReload={dispatchReload} dispatchSave={dispatchSave}>
                 <div className="loading">Loading...</div>
             </NotesListLayout>
         );
@@ -115,14 +116,15 @@ export const NotesList: React.FC = ({ filters }: NotesListProps) => {
 
     if (error) {
         return (
-            <NotesListLayout dispatchReload={dispatchReload} dispatchSave={dispatchSave}>
+            <NotesListLayout Component={Component} dispatchReload={dispatchReload} dispatchSave={dispatchSave}>
                 <div className="error">{error.message || `${error}`}</div>
             </NotesListLayout>
         );
     }
 
     return (
-        <NotesListLayout dispatchReload={dispatchReload} dispatchSave={dispatchSave}>
+        <NotesListLayout Component={Component}
+            dispatchReload={dispatchReload} dispatchSave={dispatchSave}>
             <ul>
                 {notes.map((note: Note, idx: number) =>
                     (note === editingNote) ? (
@@ -131,11 +133,11 @@ export const NotesList: React.FC = ({ filters }: NotesListProps) => {
                             onCancelEdit={onCancelEdit}
                             dispatchSave={dispatchSave} />
                     ) : (
-                        <NoteListItem data={note}
-                            elementKey={note.id}
-                            onStartEdit={onStartEdit}
-                            dispatchDelete={dispatchDelete} />
-                    )
+                            <NoteListItem data={note}
+                                elementKey={note.id}
+                                onStartEdit={onStartEdit}
+                                dispatchDelete={dispatchDelete} />
+                        )
                 )}
                 {(notes.length <= 0) ? (
                     <h2>Write something!</h2>
@@ -147,12 +149,14 @@ export const NotesList: React.FC = ({ filters }: NotesListProps) => {
 };
 
 interface NotesListLayoutProps {
-  children: React.ReactNode;
-  dispatchReload: (evt: any) => boolean;
-  dispatchSave: (note: Note, evt: any) => boolean;
+    Component?: string;
+    children: React.ReactNode;
+    dispatchReload: (evt: any) => boolean;
+    dispatchSave: (note: Note, evt: any) => boolean;
 }
 
-const NotesListLayout: React.FC = ({ children, dispatchReload, dispatchSave }: NotesListLayoutProps) => {
+const NotesListLayout: React.FC = ({ Component = "ul", children,
+    dispatchReload, dispatchSave }: NotesListLayoutProps) => {
     const newNote = {
         id: 0,
         subject: "",
@@ -164,23 +168,25 @@ const NotesListLayout: React.FC = ({ children, dispatchReload, dispatchSave }: N
             <p><a className="btn btn-info" onClick={dispatchReload}>Reload</a></p>
             {children}
             <hr />
-            <ul>
+            <Component>
                 <CreateEditNoteItem data={newNote} elementKey="_NEW" dispatchSave={dispatchSave} />
-            </ul>
+            </Component>
         </div>
     );
 };
 
 interface NotesListItemProps {
+    Component?: string;
     data: Note;
     elementKey?: string;
     onStartEdit: (note: Note, evt: any) => boolean;
     dispatchDelete: (note: Note, evt: any) => boolean;
 }
-  
-export const NoteListItem: React.FC = ({ data, elementKey, onStartEdit, dispatchDelete }: NotesListItemProps) => {
+
+export const NoteListItem: React.FC = ({ Component = "li",
+    data, elementKey, onStartEdit, dispatchDelete }: NotesListItemProps) => {
     return (
-        <li key={elementKey} className="note-item">
+        <Component key={elementKey} className="note-item">
             <div className="container">
                 <input type="hidden" name="note_id" value={data.id} />
                 <p><strong>{data.subject}</strong></p>
@@ -190,18 +196,20 @@ export const NoteListItem: React.FC = ({ data, elementKey, onStartEdit, dispatch
                     <a className="btn btn-danger" onClick={(evt: any) => dispatchDelete(data, evt)}>Delete</a>
                 </p>
             </div>
-        </li>
+        </Component>
     )
 };
 
 interface CreateEditNoteItemProps {
+    Component?: string;
     data: Note;
     elementKey?: string;
     onCancelEdit?: (evt: any) => boolean;
     dispatchSave: (evt: any) => boolean;
 }
-  
-export const CreateEditNoteItem: React.FC = ({ data, elementKey, onCancelEdit, dispatchSave }: CreateEditNoteItemProps) => {
+
+export const CreateEditNoteItem: React.FC = ({ Component = "li",
+    data, elementKey, onCancelEdit, dispatchSave }: CreateEditNoteItemProps) => {
     let { store } = useNotesContext();
 
     let [subject, setSubject] = React.useState(data.subject || "");
@@ -226,7 +234,7 @@ export const CreateEditNoteItem: React.FC = ({ data, elementKey, onCancelEdit, d
     }
 
     return (
-        <li key={elementKey} className="note-item">
+        <Component key={elementKey} className="note-item">
             <div className="container">
                 <input type="hidden" name="note_id" value={data.id} />
                 <p><input type="text"
@@ -246,6 +254,6 @@ export const CreateEditNoteItem: React.FC = ({ data, elementKey, onCancelEdit, d
                     ) : null}
                 </p>
             </div>
-        </li>
+        </Component>
     );
 };

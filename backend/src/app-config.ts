@@ -2,7 +2,7 @@ import { merge } from "../../common/utils.ts";
 
 export class AppConfig {
     appName: string = "deno-react-minimal-fullstack";
-    appVersion: string = "0.0.1";
+    appVersion: string = "0.1.0";
     appFrontUrl: string = "http://localhost:3000/";
     appFrontOrigin: string = "http://localhost:3000";
     host: string = "0.0.0.0";

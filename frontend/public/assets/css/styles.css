@@ -21,3 +21,8 @@
   border-radius: 1em;
 }
 
+.error {
+  background-color: #ff8080;
+  color: #ff0000;
+  border-color: #cc0000;
+}

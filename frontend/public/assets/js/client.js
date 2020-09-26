@@ -2260,10 +2260,6 @@ function dew$5() {
                             throw error;
                         }
                     }
-                    else {
-                        // No catch in prod codepath.
-                        return workLoop(hasTimeRemaining, initialTime);
-                    }
                 }
                 finally {
                     currentTask = null;
@@ -22589,9 +22585,6 @@ function dew$9() {
                                 var priorityLevel = inferPriorityFromExpirationTime(currentTime, expirationTime);
                                 hook.onCommitFiberRoot(rendererID, root, priorityLevel, didError);
                             }
-                            else {
-                                hook.onCommitFiberRoot(rendererID, root, undefined, didError);
-                            }
                         }
                         catch (err) {
                             if (true) {
@@ -23976,7 +23969,7 @@ function useNotesContext() {
     return context;
 }
 
-const NotesList = ({ filters }) => {
+const NotesList = ({ Component, filters }) => {
     let { store } = useNotesContext();
     let [loading, setLoading] = React.useState(false);
     let [notes, setNotes] = React.useState([]);
@@ -24067,21 +24060,21 @@ const NotesList = ({ filters }) => {
         setNotes(await store.list());
     };
     if (loading) {
-        return (React.createElement(NotesListLayout, { dispatchReload: dispatchReload, dispatchSave: dispatchSave },
+        return (React.createElement(NotesListLayout, { Component: Component, dispatchReload: dispatchReload, dispatchSave: dispatchSave },
             React.createElement("div", { className: "loading" }, "Loading...")));
     }
     if (error) {
-        return (React.createElement(NotesListLayout, { dispatchReload: dispatchReload, dispatchSave: dispatchSave },
+        return (React.createElement(NotesListLayout, { Component: Component, dispatchReload: dispatchReload, dispatchSave: dispatchSave },
             React.createElement("div", { className: "error" }, error.message || `${error}`)));
     }
-    return (React.createElement(NotesListLayout, { dispatchReload: dispatchReload, dispatchSave: dispatchSave },
+    return (React.createElement(NotesListLayout, { Component: Component, dispatchReload: dispatchReload, dispatchSave: dispatchSave },
         React.createElement("ul", null,
             notes.map((note, idx) => (note === editingNote) ? (React.createElement(CreateEditNoteItem, { data: note, elementKey: note.id, onCancelEdit: onCancelEdit, dispatchSave: dispatchSave })) : (React.createElement(NoteListItem, { data: note, elementKey: note.id, onStartEdit: onStartEdit, dispatchDelete: dispatchDelete }))),
             (notes.length <= 0) ? (React.createElement("h2", null, "Write something!")) : null))
     //<li key={note.id} className="note-item"><b>{note.subject}</b> {note.content}</li>
     );
 };
-const NotesListLayout = ({ children, dispatchReload, dispatchSave }) => {
+const NotesListLayout = ({ Component = "ul", children, dispatchReload, dispatchSave }) => {
     const newNote = {
         id: 0,
         subject: "",
@@ -24092,11 +24085,11 @@ const NotesListLayout = ({ children, dispatchReload, dispatchSave }) => {
             React.createElement("a", { className: "btn btn-info", onClick: dispatchReload }, "Reload")),
         children,
         React.createElement("hr", null),
-        React.createElement("ul", null,
+        React.createElement(Component, null,
             React.createElement(CreateEditNoteItem, { data: newNote, elementKey: "_NEW", dispatchSave: dispatchSave }))));
 };
-const NoteListItem = ({ data, elementKey, onStartEdit, dispatchDelete }) => {
-    return (React.createElement("li", { key: elementKey, className: "note-item" },
+const NoteListItem = ({ Component = "li", data, elementKey, onStartEdit, dispatchDelete }) => {
+    return (React.createElement(Component, { key: elementKey, className: "note-item" },
         React.createElement("div", { className: "container" },
             React.createElement("input", { type: "hidden", name: "note_id", value: data.id }),
             React.createElement("p", null,
@@ -24106,7 +24099,7 @@ const NoteListItem = ({ data, elementKey, onStartEdit, dispatchDelete }) => {
                 React.createElement("a", { className: "btn btn-info", onClick: (evt) => onStartEdit(data, evt) }, "Edit"),
                 React.createElement("a", { className: "btn btn-danger", onClick: (evt) => dispatchDelete(data, evt) }, "Delete")))));
 };
-const CreateEditNoteItem = ({ data, elementKey, onCancelEdit, dispatchSave }) => {
+const CreateEditNoteItem = ({ Component = "li", data, elementKey, onCancelEdit, dispatchSave }) => {
     let { store } = useNotesContext();
     let [subject, setSubject] = React.useState(data.subject || "");
     let [content, setContent] = React.useState(data.content || "");
@@ -24125,7 +24118,7 @@ const CreateEditNoteItem = ({ data, elementKey, onCancelEdit, dispatchSave }) =>
             }
         }
     };
-    return (React.createElement("li", { key: elementKey, className: "note-item" },
+    return (React.createElement(Component, { key: elementKey, className: "note-item" },
         React.createElement("div", { className: "container" },
             React.createElement("input", { type: "hidden", name: "note_id", value: data.id }),
             React.createElement("p", null,
