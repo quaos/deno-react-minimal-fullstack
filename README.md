@@ -9,10 +9,10 @@ deno run --allow-run --allow-read https://deno.land/x/denopack@0.9.0/install.ts
 * Adds `~/.deno/bin` path to your system or user's `PATH` environment variable
 ```shell
 # for *nix and MacOS
-export PATH="${PATH};~/.deno/bin"
+export PATH="${PATH}:~/.deno/bin"
 
 # for Windows
-set PATH=%PATH%:%HOME%\.deno\bin
+set PATH=%PATH%;%HOME%\.deno\bin
 ```
 * Needs [denon](https://github.com/denosaurs/denon) for debugging/live reloading
 
