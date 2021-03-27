@@ -1,5 +1,5 @@
 {
-    "$schema": "https://deno.land/x/denon@2.3.3/schema.json",
+    "$schema": "https://deno.land/x/denon@2.4.0/schema.json",
     "watcher": {
         "interval": 300,
         "match": ["*.*", "src/**/*.*"],
@@ -8,6 +8,12 @@
     },
     "scripts": {
         "build": {
+            "cmd": "deno bundle --config tsconfig.json src/client.tsx public/assets/js/client.bundle.js",
+            "desc": "bundle my client.tsx file",
+            "watch": false,
+            "unstable": true
+        },
+        "_build_denopack": {
             "cmd": "deno run main.ts -- build",
             "desc": "bundle my client.tsx file",
             "allow": [
@@ -21,16 +27,8 @@
         },
         "start": [
             {
-                "cmd": "deno run main.ts -- build",
+                "cmd": "deno bundle --config tsconfig.json src/client.tsx public/assets/js/client.bundle.js",
                 "desc": "bundle my client.tsx file",
-                "allow": [
-                    "env",
-                    "net",
-                    "read",
-                    "run"
-                ],
-                "watch": false,
-                "unstable": true
             },
             {
                 "cmd": "deno run main.ts -- --browse serve",

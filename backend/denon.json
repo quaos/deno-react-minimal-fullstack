@@ -1,5 +1,5 @@
 {
-    "$schema": "https://deno.land/x/denon@2.3.3/schema.json",
+    "$schema": "https://deno.land/x/denon@2.4.0/schema.json",
     "watch": false,
     "watcher": {
         "interval": 300,

@@ -205,7 +205,7 @@ interface CreateEditNoteItemProps {
     data: Note;
     elementKey?: string;
     onCancelEdit?: (evt: any) => boolean;
-    dispatchSave: (evt: any) => boolean;
+    dispatchSave: (note: Note, evt: any) => boolean;
 }
 
 export const CreateEditNoteItem: React.FC = ({ Component = "li",

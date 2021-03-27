@@ -1,6 +1,6 @@
 {
   "name": "deno-react-minimal-fullstack",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Deno+React Fullstack App, minimal setup",
   "author": {
     "name": "Chakrit W.",
@@ -11,7 +11,7 @@
     "github": "https://github.com/quaos/deno-react-minimal-fullstack"
   },
   "scripts": {
-    "build-frontend": "cd frontend && deno run --allow-env --allow-net --allow-read --allow-run main.ts -- build",
+    "build-frontend": "cd frontend && deno bundle --config tsconfig.json src/client.tsx public/assets/js/client.bundle.js",
     "backend": "cd backend && deno run --allow-env --allow-net --allow-read main.ts",
     "frontend": "yarn build-frontend && cd frontend && deno run --allow-env --allow-net --allow-read --allow-run main.ts -- --browse serve",
     "debug-backend": "cd backend && denon run debug",
