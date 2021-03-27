@@ -9,7 +9,7 @@ export class BaseApiClient {
 
     async callApi<T>(method: string = "GET", endpoint: string, reqData?: any): Promise<T> {
         let queryString;
-        let headers = {};
+        let headers: Record<string, string> = {};
         let reqBody;
         if (!reqData) {
             queryString = "";

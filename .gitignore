@@ -1,6 +1,11 @@
+node_modules
 .vscode/**/*
 !.vscode/settings.json
 
+frontend/public/assets/js/client.bundle.js
+
+*.log
+**/*.log
 *.env
 **/*.env
 *.SECRET

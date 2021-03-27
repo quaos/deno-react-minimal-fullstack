@@ -2,10 +2,7 @@
 
 ## Requirements
 
-* Needs to install [denopack](https://denopack.mod.land/) (workaround for `deno bundle` not bundling React libs properly)
-```shell
-deno run --allow-run --allow-read https://deno.land/x/denopack@0.9.0/install.ts
-```
+* Deno version: ^1.7.0
 * Adds `~/.deno/bin` path to your system or user's `PATH` environment variable
 ```shell
 # for *nix and MacOS
@@ -34,13 +31,13 @@ set PATH=%PATH%:%HOME%\.deno\bin
 ### Running
 
 ```shell
-yarn run backend
+yarn backend
 
 # or:
 # in /backend/
 deno run --allow-env --allow-net --allow-read main.ts
 
-# for live-reload:
+# or for live-reload:
 # in /backend/
 denon start
 ```
@@ -50,14 +47,14 @@ denon start
 ### Building and running
 
 ```shell
-yarn run frontend
+yarn frontend
 
 # or:
 # in /frontend/
 deno run --allow-env --allow-net --allow-read --allow-run main.ts -- build \
 && deno run --allow-env --allow-net --allow-read --allow-run main.ts -- --browse serve
 
-# for live-reload:
+# or for live-reload:
 # in /frontend/
 denon start
 ```
