@@ -18,7 +18,7 @@ export async function runServer(opts?: RunServerOptions): Promise<number> {
     );
     const abcApp = new abc.Application();
     abcApp
-      .use((next) =>
+      .use((next: abc.HandlerFunc) =>
         async (ctx) => {
           console.log(`${ctx.request.method} ${ctx.request.url}`);
           await next(ctx);
@@ -26,7 +26,7 @@ export async function runServer(opts?: RunServerOptions): Promise<number> {
       )
       .static("/", sourceDir)
       .file("/", `${sourceDir}/index.html`)
-      .start({ port });
+      .start({ hostname: host, port });
     return 0;
   } catch (err) {
     console.error(err);

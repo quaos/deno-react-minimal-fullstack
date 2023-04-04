@@ -1,12 +1,6 @@
 {
   "compilerOptions": {
-    "sourceMap": true,
-    "moduleResolution": "node",
-    "noEmit": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "target": "ESNext",
-    "module": "ESNext",
+    "isolatedModules": false,
     "allowJs": false,
     "allowUmdGlobalAccess": false,
     "allowUnreachableCode": false,
@@ -17,7 +11,9 @@
     "disableSizeLimit": false,
     "jsx": "react",
     "jsxFactory": "React.createElement",
-    "lib": ["DOM", "es2018"],
+    "lib": ["esnext"],
+    "moduleResolution": "nodenext",
+    "noEmit": true,
     "noFallthroughCasesInSwitch": false,
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -29,6 +25,8 @@
     "preserveConstEnums": false,
     "removeComments": false,
     "resolveJsonModule": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
     "strict": true,
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
@@ -37,6 +35,5 @@
     "suppressExcessPropertyErrors": false,
     "suppressImplicitAnyIndexErrors": false
   },
-  "include": ["src"],
   "deno": true
 }

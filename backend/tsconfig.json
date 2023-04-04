@@ -1,12 +1,6 @@
 {
   "compilerOptions": {
-    "sourceMap": true,
-    "moduleResolution": "node",
-    "noEmit": true,
-    "skipLibCheck": true,
-    "isolatedModules": false,
-    "target": "esnext",
-    "module": "esnext",
+    "isolatedModules": true,
     "allowJs": false,
     "allowUmdGlobalAccess": false,
     "allowUnreachableCode": false,
@@ -17,7 +11,10 @@
     "disableSizeLimit": false,
     "jsx": "react",
     "jsxFactory": "React.createElement",
-    "lib": ["dom", "esnext"],
+    "lib": ["deno.ns", "esnext"],
+    "module": "esnext",
+    "moduleResolution": "nodenext",
+    "noEmit": true,
     "noFallthroughCasesInSwitch": false,
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -29,13 +26,16 @@
     "preserveConstEnums": false,
     "removeComments": false,
     "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
     "strict": true,
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "suppressExcessPropertyErrors": false,
-    "suppressImplicitAnyIndexErrors": false
+    "suppressImplicitAnyIndexErrors": false,
+    "target": "esnext"
   },
   "include": ["src"],
   "deno": true

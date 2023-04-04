@@ -1,10 +1,14 @@
 export {
     Application,
     Context,
-    Middleware,
     Router,
+    Status,
+} from "https://deno.land/x/oak@v12.1.0/mod.ts";
+export type {
+    Middleware,
     RouterContext,
     RouterMiddleware,
     State,
-    Status,
-} from "https://deno.land/x/oak@v6.0.1/mod.ts";
+} from "https://deno.land/x/oak@v12.1.0/mod.ts";
+
+export type NextFn = () => Promise<unknown>

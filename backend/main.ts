@@ -3,8 +3,8 @@ import { Server } from "./src/server.ts";
 
 let rc;
 try {
-  let appConfig = AppConfig.fromEnv();
-  let server = new Server(appConfig);
+  const appConfig = AppConfig.fromEnv();
+  const server = new Server(appConfig);
 
   rc = await server.start();
 } catch (err) {

@@ -1,13 +1,13 @@
-import { React } from "../deps/react.ts";
+import React, { createContext, useContext, useState } from "../deps/react.ts";
 
 import { BaseApiClient } from "../services/BaseApiClient.ts";
 
 export interface AppContextProps {
-  loading: boolean;
   apiClient: BaseApiClient;
+  isLoading: boolean;
 }
 
-export const AppContext = React.createContext<AppContextProps | undefined>(
+export const AppContext = createContext<AppContextProps | undefined>(
   undefined,
 );
 
@@ -15,8 +15,8 @@ export interface AppContextProviderProps {
   children: React.ReactNode;
 }
 
-export const AppContextProvider: React.FC = ({ children }: AppContextProviderProps) => {
-  let [loading, setLoading] = React.useState(true);
+export const AppContextProvider = ({ children }: AppContextProviderProps) => {
+  const [isLoading, setIsLoading] = useState(true);
 
   const apiClient = new BaseApiClient({});
   console.log("Created API client:", apiClient);
@@ -25,25 +25,25 @@ export const AppContextProvider: React.FC = ({ children }: AppContextProviderPro
     console.log("Start loading...");
 
     const timerId = setTimeout(() => {
-      setLoading(false);
+      setIsLoading(false);
       console.log("Finished loading");
     }, 1000);
 
     return () => {
       //cleanup
-      clearTimeout(timerId);
+      timerId && clearTimeout(timerId);
     };
   }, []);
 
   return (
-    <AppContext.Provider value={{ loading, apiClient }}>
+    <AppContext.Provider value={{ isLoading, apiClient }}>
       {children}
     </AppContext.Provider>
   );
 };
 
 export function useAppContext(): AppContextProps {
-  const context = React.useContext(AppContext);
+  const context = useContext(AppContext);
   if (context === undefined) {
     throw new Error("No AppContext Provider available");
   }

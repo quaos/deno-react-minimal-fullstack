@@ -1,7 +1,7 @@
-import { React } from "../deps/react.ts";
+import React from "../deps/react.ts";
 
 import { AppContextProvider } from "../context/app.tsx";
-import { NotesContextProvider } from "../context/notes.tsx";
+import { NotesStoreContextProvider } from "../context/notes-store.tsx";
 import { NotesList } from "./NotesList.tsx";
 
 const styles = {
@@ -14,7 +14,10 @@ const styles = {
   },
 };
 
-const App = (props: any) => {
+// deno-lint-ignore no-empty-interface
+export interface AppProps {}
+
+const App = (props: AppProps) => {
   return (
     <AppContextProvider>
       <div className="container">
@@ -22,9 +25,9 @@ const App = (props: any) => {
           <img src="assets/img/deno-logo.png" style={styles.logo} />
           <img src="assets/img/react-logo192.png" style={styles.logo} />
         </p>
-        <NotesContextProvider>
+        <NotesStoreContextProvider>
           <NotesList filters={{}} />
-        </NotesContextProvider>
+        </NotesStoreContextProvider>
       </div>
     </AppContextProvider>
   );

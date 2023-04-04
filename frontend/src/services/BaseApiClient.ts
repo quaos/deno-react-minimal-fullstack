@@ -1,15 +1,16 @@
+import { HttpStatus } from "../deps/std.ts";
 import { merge } from "../../../common/utils.ts";
 
 export class BaseApiClient {
-    apiBaseUrl: string = "http://localhost:8080/api";
+    apiBaseUrl = "http://localhost:8080/api";
 
     constructor(attrs?: Partial<BaseApiClient>) {
         (attrs) && merge(this, attrs);
     }
 
-    async callApi<T>(method: string = "GET", endpoint: string, reqData?: any): Promise<T> {
+    async callApi<T>(method = "GET", endpoint: string, reqData?: any): Promise<T> {
         let queryString;
-        let headers: Record<string, string> = {};
+        const headers: Record<string, string> = {};
         let reqBody;
         if (!reqData) {
             queryString = "";
@@ -28,6 +29,9 @@ export class BaseApiClient {
             headers,
             body: (reqBody) ? JSON.stringify(reqBody) : undefined,
         });
+        if (resp.status === HttpStatus.NoContent || !resp.body) {
+            return undefined as T
+        }
 
         return await resp.json() as T
     }

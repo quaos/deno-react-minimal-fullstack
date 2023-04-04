@@ -1,18 +1,29 @@
-import { Middleware, RouterMiddleware } from "../deps/oak.ts";
+import { Context, Middleware, NextFn, RouterMiddleware } from "../deps/oak.ts";
 
 export interface AccessLoggerOptions {
     format?: string;
+    prefix?: string;
 };
 
 export function accessLogger<
     T extends RouterMiddleware | Middleware = Middleware,
->(opts?: AccessLoggerOptions): T {
+>(opts: AccessLoggerOptions = {}): T {
+    const { prefix } = opts;
     //TODO: Add format support
-    const middleware: Middleware = async (ctx, next) => {
-        let t1 = Date.now();
+    const middleware = async (ctx: Context, next: NextFn) => {
+        const t1 = new Date();
         await next();
-        let dt = Date.now() - t1;
-        console.log(`${ctx.request.method} ${ctx.request.url} => ${ctx.response.status} (${dt} msecs)`);
+        const dt = Date.now() - t1.getTime();
+        const fields = [
+            ...(prefix ? [prefix] : []),
+            t1.toISOString(),
+            ctx.request.method,
+            ctx.request.url,
+            "=>",
+            `${ctx.response.status}`,
+            `(${dt} msecs)`,
+        ]
+        console.log(fields.join(" "));
     };
     return middleware as T;
 }
