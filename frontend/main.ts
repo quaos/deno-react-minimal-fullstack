@@ -1,9 +1,9 @@
-import { opn } from "./src/deps/opn.ts";
+import { open } from "./src/deps/opn.ts";
 
 import { runServer } from "./src/server.ts";
 
 async function browse(url: string) {
-  await opn(url);
+  await open(url);
   return 0;
 }
 

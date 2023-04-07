@@ -1,12 +1,15 @@
-import { React, ReactDOM } from "./deps/react.ts";
+import React from "./deps/react.ts";
+import { createRoot } from "./deps/react-dom.ts";
 
 import App from "./components/App.tsx";
 
 window.addEventListener("DOMContentLoaded", (evt) => {
-  (ReactDOM as any).render(
-    <App />,
-    // @ts-ignore
-    document.getElementById("root"),
+  /// @ts-ignore already added lib: ["dom"] to tsconfig.json
+  const root = createRoot(document.getElementById("root")!);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
   );
 });
 

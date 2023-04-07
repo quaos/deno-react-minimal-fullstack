@@ -1,4 +1,4 @@
-import { React } from "./react.ts";
+import * as React from "./react.ts";
 import { assert, assertEquals } from "./std.ts";
 
 Deno.test("React deps has use* hooks", () => {

@@ -1,4 +1,4 @@
-import { Middleware, RouterMiddleware } from "../deps/oak.ts";
+import { Context, Middleware, NextFn, RouterMiddleware } from "../deps/oak.ts";
 
 export interface ErrorHandlerOptions {
     formatter?: (err: Error) => string;
@@ -7,7 +7,7 @@ export interface ErrorHandlerOptions {
 export function errorHandler<
     T extends RouterMiddleware | Middleware = Middleware,
 >(opts?: ErrorHandlerOptions): T {
-    const middleware: Middleware = async (ctx, next) => {
+    const middleware = async (ctx: Context, next: NextFn) => {
         await next();
         if (ctx.state.lastError) {
             if (ctx.response.status >= 500) {

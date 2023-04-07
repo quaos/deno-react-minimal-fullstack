@@ -1,5 +1,5 @@
-export interface Repository<T, TKey> {
-    list(filters?: any): Promise<T[]>;
+export interface Repository<T, TKey, TFilters extends object> {
+    list(filters?: TFilters): Promise<T[]>;
     getItem(key: TKey): Promise<T | undefined>;
     addItem(item: T): Promise<T>;
     updateItem(item: T): Promise<boolean>;

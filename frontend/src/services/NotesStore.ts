@@ -27,7 +27,7 @@ export class NotesStore {
     };
 
     public async deleteItem(item: Note): Promise<boolean> {
-        const { success } = await this.client.callApi("DELETE", `${this.endpoint}/${item.id}`);
-        return success;
+        await this.client.callApi<never>("DELETE", `${this.endpoint}/${item.id}`);
+        return true;
     }
 }
