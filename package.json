@@ -1,6 +1,6 @@
 {
   "name": "deno-react-minimal-fullstack",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Deno+React Fullstack App, minimal setup",
   "author": {
     "name": "Chakrit W.",
@@ -18,9 +18,7 @@
     "debug-frontend": "cd frontend && denon start",
     "cache": "deno cache backend/src/deps/*.ts frontend/src/deps/*.ts"
   },
-  "dependencies": {
-  },
-  "devDependencies": {
-  },
+  "dependencies": {},
+  "devDependencies": {},
   "private": true
 }
